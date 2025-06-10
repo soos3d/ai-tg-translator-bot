@@ -21,7 +21,7 @@ An AI-powered bot that enables real-time multilingual communication in Telegram 
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/ux-support-bot.git
+git clone https://github.com/soos3d/ai-tg-translator-bot.git
 cd ux-support-bot
 ```
 
@@ -103,6 +103,40 @@ python bot.py
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
+
+## Deployment
+
+The bot can be deployed using Docker for consistency across environments. Here are several deployment options:
+
+### Docker Deployment (Local or VPS)
+
+1. Build and run using docker-compose:
+```bash
+docker-compose up -d --build
+```
+
+2. View logs:
+```bash
+docker-compose logs -f
+```
+
+### Production Considerations
+
+1. **Database Persistence**:
+   - The Docker setup includes volume mounting for SQLite
+   - For higher loads, consider switching to PostgreSQL
+
+2. **Environment Variables**:
+   - Never commit `.env` to version control
+   - Use platform-specific secrets management
+
+3. **Monitoring**:
+   - Set up logging to a service like Papertrail
+   - Configure uptime monitoring
+
+4. **Backup**:
+   - Regularly backup the `data` directory
+   - Consider automated backup solutions
 
 ## License
 
