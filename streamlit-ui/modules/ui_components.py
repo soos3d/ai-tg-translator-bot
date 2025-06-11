@@ -44,7 +44,13 @@ def create_date_filter():
     start_datetime = datetime.combine(start_date, datetime.min.time())
     end_datetime = datetime.combine(end_date, datetime.max.time())
     
-    return start_date, end_date, start_datetime, end_datetime
+    # Add a small separator
+    st.sidebar.markdown("")
+    
+    # Create a refresh button for manual data refresh
+    refresh_pressed = st.sidebar.button("🔄 Refresh Data", help="Clear the cache and fetch fresh data from MongoDB")
+    
+    return start_date, end_date, start_datetime, end_datetime, refresh_pressed
 
 def display_overview_metrics(df):
     """Display overview metrics in a row of cards"""

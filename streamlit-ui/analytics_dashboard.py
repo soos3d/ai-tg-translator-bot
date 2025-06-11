@@ -9,7 +9,7 @@ from datetime import datetime
 
 # Import modules
 from modules.config import DEFAULT_DATE_RANGE
-from modules.data_connection import init_connection, get_data
+from modules.data_connection import init_connection, get_data, clear_cache
 from modules.data_processing import (
     prepare_time_series_data,
     get_language_distribution,
@@ -46,8 +46,13 @@ def main():
     client = init_connection()
     
     if client:
-        # Create date filter in sidebar
-        start_date, end_date, start_datetime, end_datetime = create_date_filter()
+        # Create date filter in sidebar with refresh button
+        start_date, end_date, start_datetime, end_datetime, refresh_pressed = create_date_filter()
+        
+        # If refresh button is pressed, clear the cache
+        if refresh_pressed:
+            clear_cache()
+            st.success("Cache cleared! Fetching fresh data from MongoDB...")
         
         # Load data
         if start_date <= end_date:
@@ -55,7 +60,12 @@ def main():
             
             # If data is available
             if not df.empty:
-                st.success(f"Loaded {len(df)} messages from MongoDB")
+                message_count = len(df)
+                if refresh_pressed:
+                    st.success(f"✅ Refreshed! Loaded {message_count} messages from MongoDB")
+                else:
+                    st.info(f"Loaded {message_count} messages from MongoDB (Data cached for 5 minutes)")
+                    st.markdown("<small>Use the Refresh button in the sidebar to get the latest data.</small>", unsafe_allow_html=True)
                 
                 # Display overview metrics
                 display_overview_metrics(df)

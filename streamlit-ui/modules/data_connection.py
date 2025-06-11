@@ -31,6 +31,11 @@ def init_connection():
         st.error(error_msg)
         return None
 
+def clear_cache():
+    """Clear the data cache to force refresh of data"""
+    get_data.clear()
+    logger.info("MongoDB data cache cleared")
+
 @st.cache_data(ttl=300)  # Cache data for 5 minutes
 def get_data(_client, start_date=None, end_date=None):
     """Fetch data from MongoDB with optional date filtering"""
