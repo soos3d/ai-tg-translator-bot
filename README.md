@@ -24,7 +24,6 @@ An AI-powered bot that enables real-time multilingual communication in Telegram 
 1. Clone the repository:
 ```bash
 git clone https://github.com/soos3d/ai-tg-translator-bot.git
-cd ux-support-bot
 ```
 
 2. Create and activate a virtual environment:
@@ -61,6 +60,9 @@ The bot is configured through environment variables in the `.env` file:
 - `LANG_CONFIDENCE_THRESHOLD`: Minimum confidence for language detection (default: 0.75)
 
 ### MongoDB Settings (Optional)
+
+You can store the messages in MongoDB for analytics and reporting.
+
 - `MONGODB_URI`: MongoDB connection string
 - `MONGODB_DB_NAME`: Database name (default: tg_translator)
 - `MONGODB_COLLECTION_NAME`: Collection name (default: messages)
