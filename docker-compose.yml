@@ -1,0 +1,10 @@
+version: '3.8'
+
+services:
+  bot:
+    build: .
+    volumes:
+      - ./data:/app/data  # Persist database
+    env_file:
+      - .env
+    restart: unless-stopped

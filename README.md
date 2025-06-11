@@ -8,7 +8,8 @@ An AI-powered bot that enables real-time multilingual communication in Telegram 
 - 🔄 Bidirectional translation (any language ↔️ English)
 - 📝 Preserves message context and threading
 - 💾 Message caching for improved performance
-- 🗄️ Database storage for translation history
+- 🗄️ Dual database storage (local SQLite + MongoDB)
+- 📊 Analytics-ready data collection
 - 🛠️ Highly configurable
 
 ## Prerequisites
@@ -16,6 +17,7 @@ An AI-powered bot that enables real-time multilingual communication in Telegram 
 - Python 3.x
 - A Telegram Bot Token (get it from [@BotFather](https://t.me/botfather))
 - A Groq API Key (get it from [Groq Console](https://console.groq.com/docs/quickstart))
+- MongoDB URI (optional, for cloud storage)
 
 ## Installation
 
@@ -55,8 +57,13 @@ The bot is configured through environment variables in the `.env` file:
 - `DEBUG_MODE`: Enable debug logging (default: False)
 - `CACHE_MAX_SIZE`: Maximum number of cached messages (default: 100)
 - `CACHE_EXPIRATION_SECONDS`: Cache entry lifetime in seconds (default: 1800)
-- `DB_CLEANUP_DAYS`: Days to keep translations in database (default: 7)
+- `DB_CLEANUP_DAYS`: Days to keep translations in local database (default: 7)
 - `LANG_CONFIDENCE_THRESHOLD`: Minimum confidence for language detection (default: 0.75)
+
+### MongoDB Settings (Optional)
+- `MONGODB_URI`: MongoDB connection string
+- `MONGODB_DB_NAME`: Database name (default: tg_translator)
+- `MONGODB_COLLECTION_NAME`: Collection name (default: messages)
 
 ## Usage
 
@@ -96,8 +103,12 @@ python bot.py
    - Sends translated response as a reply to original message
 
 4. **Data Management**:
-   - Translations are cached for performance
-   - Historical data stored in SQLite database
+    - Translations are cached in memory for performance
+    - Translation mappings stored in local SQLite database
+    - User data and English messages stored in MongoDB (if configured)
+      - Includes user profiles, message metadata
+      - Stores both original and translated content
+      - Enables advanced analytics and reporting
    - Automatic cleanup of old entries
 
 ## Contributing

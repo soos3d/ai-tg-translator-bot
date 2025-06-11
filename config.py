@@ -20,6 +20,14 @@ CACHE_EXPIRATION_SECONDS = int(os.getenv('CACHE_EXPIRATION_SECONDS', '1800'))  #
 # Database configuration
 DB_CLEANUP_DAYS = int(os.getenv('DB_CLEANUP_DAYS', '7'))  # Number of days to keep translations
 
+# MongoDB configuration
+MONGODB_URI = os.getenv('MONGODB_URI')
+MONGODB_DB_NAME = os.getenv('MONGODB_DB_NAME', 'tg_translator')
+MONGODB_COLLECTION_NAME = os.getenv('MONGODB_COLLECTION_NAME', 'messages')
+if not MONGODB_URI:
+    logger = __import__('logging').getLogger(__name__)
+    logger.warning('MONGODB_URI not set in .env file. MongoDB storage will be disabled.')
+
 # Language detection configuration
 LANG_CONFIDENCE_THRESHOLD = float(os.getenv('LANG_CONFIDENCE_THRESHOLD', '0.75'))  # 75% confidence threshold
 

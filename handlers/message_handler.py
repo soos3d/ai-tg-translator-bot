@@ -4,14 +4,16 @@ from langdetect import detect, detect_langs
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from config import LANG_CONFIDENCE_THRESHOLD, MESSAGE_EMOJIS
+from config import LANG_CONFIDENCE_THRESHOLD, MESSAGE_EMOJIS, MONGODB_URI
 from services import TranslationService
+from services.mongodb_service import MongoDBService
 
 # Configure logging
 logger = logging.getLogger(__name__)
 
-# Initialize translation service
+# Initialize services
 translation_service = TranslationService()
+mongodb_service = MongoDBService() if MONGODB_URI else None
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
@@ -77,7 +79,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 allow_sending_without_reply=True  # This ensures the message is sent even if the original is deleted
             )
             
-            # Store message info for potential agent replies in database
+            # Store message info for potential agent replies in local database
             db_service = context.bot_data.get('db_service')
             if db_service:
                 success = db_service.store_translation(
@@ -103,13 +105,40 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                             'translated_text': translated_text
                         }
                         cache_service.set(sent_message.message_id, cache_data)
-                        logger.info(f"Stored translation info for message {sent_message.message_id} in database and cache")
+                        logger.info(f"Stored translation info for message {sent_message.message_id} in local database and cache")
                     else:
-                        logger.info(f"Stored translation info for message {sent_message.message_id} in database only (no cache)")
+                        logger.info(f"Stored translation info for message {sent_message.message_id} in local database only (no cache)")
                 else:
-                    logger.error(f"Failed to store translation info for message {sent_message.message_id} in database")
+                    logger.error(f"Failed to store translation info for message {sent_message.message_id} in local database")
             else:
-                logger.error("Database service not initialized")
+                logger.error("Local database service not initialized")
+                
+            # Store user data and English text in MongoDB
+            if mongodb_service and mongodb_service.is_connected:
+                # Get the English text (either translated or original)
+                english_text = translated_text if lang_code != 'en' else message.text
+                
+                # Store in MongoDB
+                mongo_success = mongodb_service.store_message(
+                    user_id=message.from_user.id,
+                    username=message.from_user.username,
+                    first_name=message.from_user.first_name,
+                    last_name=message.from_user.last_name,
+                    chat_id=message.chat_id,
+                    message_id=message.message_id,
+                    original_text=message.text,
+                    original_lang=lang_code,
+                    english_text=english_text
+                )
+                
+                if mongo_success:
+                    logger.info(f"Stored message data in MongoDB for user {message.from_user.id}")
+                else:
+                    logger.error(f"Failed to store message data in MongoDB for user {message.from_user.id}")
+            elif MONGODB_URI and not mongodb_service:
+                logger.error("MongoDB service failed to initialize")
+            elif not MONGODB_URI:
+                logger.debug("MongoDB storage is disabled. No data stored in MongoDB.")
         
         except Exception as e:
             error_message = f"Translation error: {e}"
