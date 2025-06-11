@@ -119,25 +119,19 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## Deployment
 
-The bot can be deployed using Docker for consistency across environments. Here are several deployment options:
-
-### Docker Deployment (Local or VPS)
-
-1. Build and run using docker-compose:
-```bash
-docker-compose up -d --build
-```
-
-2. View logs:
-```bash
-docker-compose logs -f
-```
+The bot can be deployed on any system with Python 3.x installed. For production environments, consider:
 
 ### Production Considerations
 
-1. **Database Persistence**:
-   - The Docker setup includes volume mounting for SQLite
-   - For higher loads, consider switching to PostgreSQL
+1. **Database Management**:
+   - Local SQLite database for translation mappings
+   - MongoDB for analytics and data persistence
+   - For higher loads, consider optimizing database cleanup schedules
+
+2. **System Requirements**:
+   - Stable internet connection
+   - Sufficient memory for caching (adjust `CACHE_MAX_SIZE` as needed)
+   - Adequate storage for local database
 
 2. **Environment Variables**:
    - Never commit `.env` to version control
