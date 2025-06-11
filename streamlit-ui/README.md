@@ -19,21 +19,41 @@ This Streamlit dashboard provides visualization and analytics for the UX Support
 pip install -r requirements.txt
 ```
 
-2. Ensure your MongoDB connection details are properly configured in your `.env` file:
+2. Set up your Streamlit secrets:
+```bash
+# Copy the template file
+cp .streamlit/secrets.toml.template .streamlit/secrets.toml
+
+# Edit secrets.toml with your MongoDB credentials
 ```
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/
-MONGODB_DB_NAME=tg_translator
-MONGODB_COLLECTION_NAME=messages
+
+3. Configure your `secrets.toml` with your MongoDB settings:
+```toml
+# MongoDB connection settings
+mongodb_uri = "mongodb+srv://username:password@cluster.mongodb.net/"
+mongodb_db_name = "tg_translator"
+mongodb_collection_name = "messages"
 ```
+
+> **Important**: Never commit your `secrets.toml` file to version control. It's already added to `.gitignore`.
 
 ## Usage
 
-Run the Streamlit dashboard:
+1. Run the Streamlit dashboard:
 ```bash
-python3 -m streamlit run streamlit-ui/analytics_dashboard.py 
+python3 -m streamlit run streamlit-ui/analytics_dashboard.py
 ```
 
-This will start the dashboard on your local machine and automatically open it in your web browser (typically at http://localhost:8501).
+2. Access the dashboard in your web browser:
+- Local URL: http://localhost:8501
+- Network URL: Will be shown in the terminal
+
+### Deployment
+
+When deploying to Streamlit Community Cloud:
+1. Go to your app dashboard
+2. Navigate to "Settings" → "Secrets"
+3. Add your secrets in the same TOML format as your local `secrets.toml`
 
 ## Dashboard Sections
 

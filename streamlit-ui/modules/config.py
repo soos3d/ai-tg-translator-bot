@@ -3,19 +3,26 @@ Configuration settings for the Analytics Dashboard
 """
 import os
 import logging
-from dotenv import load_dotenv
+import streamlit as st
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Load environment variables
-load_dotenv()
-
 # MongoDB connection parameters
-MONGODB_URI = os.getenv('MONGODB_URI')
-MONGODB_DB_NAME = os.getenv('MONGODB_DB_NAME', 'tg_translator')
-MONGODB_COLLECTION_NAME = os.getenv('MONGODB_COLLECTION_NAME', 'messages')
+# Try to get from Streamlit secrets first, then fallback to environment variables
+try:
+    MONGODB_URI = st.secrets['MONGODB_URI']
+    MONGODB_DB_NAME = st.secrets['MONGODB_DB_NAME']
+    MONGODB_COLLECTION_NAME = st.secrets['MONGODB_COLLECTION_NAME']
+
+except FileNotFoundError:
+    # Fallback to environment variables if secrets.toml doesn't exist
+    logger.warning('No secrets.toml file found. Falling back to environment variables.')
+    MONGODB_URI = os.environ.get('MONGODB_URI')
+    MONGODB_DB_NAME = os.environ.get('MONGODB_DB_NAME', 'tg_translator')
+    MONGODB_COLLECTION_NAME = os.environ.get('MONGODB_COLLECTION_NAME', 'messages')
+    DB_CREDENTIALS = {}
 
 # UI Configuration
 PAGE_TITLE = "Translation Bot Analytics Dashboard"
