@@ -56,15 +56,15 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             # Format message information
             message_info = (
-                f"{MESSAGE_EMOJIS['message']} Message Information:\n"
+                f"Message Information:\n"
                 f"Original Text:\n{message.text}"
             )
 
             # Combine all information
-            info_message = f"{user_info}\n\n{language_info}{message_info}"
+            info_message = f"{message_info}"
             
             # Add translation to message
-            translation_info = f"\n\n{MESSAGE_EMOJIS['translation']} Translation to English:\n{translated_text}"
+            translation_info = f"\n\nTranslation to English:\n{translated_text}"
             info_message += translation_info
 
             if context.bot_data.get('debug_mode', False):
@@ -210,7 +210,7 @@ async def handle_agent_reply(update: Update, context: ContextTypes.DEFAULT_TYPE)
             # Send the translated reply to the original message
             await context.bot.send_message(
                 chat_id=chat_id,
-                text=f"{MESSAGE_EMOJIS['translation']} {translated_reply}",  # Prefixing with an emoji to indicate translation
+                text=f"{translated_reply}",  # Prefixing with an emoji to indicate translation
                 reply_to_message_id=original_message_id,  # Reply to user's original message
                 disable_notification=False  # User should be notified of this reply
             )
