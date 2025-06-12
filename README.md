@@ -69,13 +69,30 @@ You can store the messages in MongoDB for analytics and reporting.
 
 ## Usage
 
+### Bot
+
 1. Start the bot:
 ```bash
-python bot.py
+python3 bot.py
 ```
 
 2. Add the bot to your Telegram group
 > Important: The bot must be added to the group as an admin.
+
+### Analytics Dashboard
+
+If you're using MongoDB for data storage, you can access the analytics dashboard:
+
+1. Set up your Streamlit secrets:
+```bash
+cp .streamlit/secrets.toml.template .streamlit/secrets.toml
+# Edit secrets.toml with your MongoDB credentials
+```
+
+2. Run the dashboard:
+```bash
+python3 -m streamlit run streamlit-ui/analytics_dashboard.py
+```
 
 3. The bot will automatically:
    - Detect non-English messages
