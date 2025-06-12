@@ -64,7 +64,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             info_message = f"{message_info}"
             
             # Add translation to message
-            translation_info = f"\n\nTranslation to English:\n{translated_text}"
+            translation_info = translated_text
             info_message += translation_info
 
             if context.bot_data.get('debug_mode', False):
@@ -73,7 +73,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             # Send a message that's visually linked to the original but doesn't notify the sender
             sent_message = await context.bot.send_message(
                 chat_id=message.chat_id,
-                text=info_message,
+                text=translation_info,
                 reply_to_message_id=message.message_id,  # This creates the visual thread connection
                 disable_notification=True,  # This prevents notification for the message
                 allow_sending_without_reply=True  # This ensures the message is sent even if the original is deleted
@@ -210,7 +210,7 @@ async def handle_agent_reply(update: Update, context: ContextTypes.DEFAULT_TYPE)
             # Send the translated reply to the original message
             await context.bot.send_message(
                 chat_id=chat_id,
-                text=f"{translated_reply}",  # Prefixing with an emoji to indicate translation
+                text=translated_reply,  # Prefixing with an emoji to indicate translation
                 reply_to_message_id=original_message_id,  # Reply to user's original message
                 disable_notification=False  # User should be notified of this reply
             )
