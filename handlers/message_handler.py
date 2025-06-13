@@ -56,15 +56,15 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             # Format message information
             message_info = (
-                f"{MESSAGE_EMOJIS['message']} Message Information:\n"
+                f"Message Information:\n"
                 f"Original Text:\n{message.text}"
             )
 
             # Combine all information
-            info_message = f"{user_info}\n\n{language_info}{message_info}"
+            info_message = f"{message_info}"
             
             # Add translation to message
-            translation_info = f"\n\n{MESSAGE_EMOJIS['translation']} Translation to English:\n{translated_text}"
+            translation_info = translated_text
             info_message += translation_info
 
             if context.bot_data.get('debug_mode', False):
@@ -73,7 +73,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             # Send a message that's visually linked to the original but doesn't notify the sender
             sent_message = await context.bot.send_message(
                 chat_id=message.chat_id,
-                text=info_message,
+                text=translation_info,
                 reply_to_message_id=message.message_id,  # This creates the visual thread connection
                 disable_notification=True,  # This prevents notification for the message
                 allow_sending_without_reply=True  # This ensures the message is sent even if the original is deleted
@@ -210,16 +210,16 @@ async def handle_agent_reply(update: Update, context: ContextTypes.DEFAULT_TYPE)
             # Send the translated reply to the original message
             await context.bot.send_message(
                 chat_id=chat_id,
-                text=f"{MESSAGE_EMOJIS['translation']} {translated_reply}",  # Prefixing with an emoji to indicate translation
+                text=translated_reply,  # Prefixing with an emoji to indicate translation
                 reply_to_message_id=original_message_id,  # Reply to user's original message
                 disable_notification=False  # User should be notified of this reply
             )
             
             # Let the agent know their message was translated and sent
-            await message.reply_text(
-                f"{MESSAGE_EMOJIS['success']} Your response has been translated to {original_lang.upper()} and sent to the user.",
-                disable_notification=True  # No need to notify the agent
-            )
+          #  await message.reply_text(
+          #      f"{MESSAGE_EMOJIS['success']} Your response has been translated to {original_lang.upper()} and sent to the user.",
+          #      disable_notification=True  # No need to notify the agent
+          #  )
             
         except Exception as e:
             error_message = f"Translation error: {e}"
