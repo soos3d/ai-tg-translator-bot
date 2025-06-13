@@ -216,10 +216,10 @@ async def handle_agent_reply(update: Update, context: ContextTypes.DEFAULT_TYPE)
             )
             
             # Let the agent know their message was translated and sent
-            await message.reply_text(
-                f"{MESSAGE_EMOJIS['success']} Your response has been translated to {original_lang.upper()} and sent to the user.",
-                disable_notification=True  # No need to notify the agent
-            )
+          #  await message.reply_text(
+          #      f"{MESSAGE_EMOJIS['success']} Your response has been translated to {original_lang.upper()} and sent to the user.",
+          #      disable_notification=True  # No need to notify the agent
+          #  )
             
         except Exception as e:
             error_message = f"Translation error: {e}"

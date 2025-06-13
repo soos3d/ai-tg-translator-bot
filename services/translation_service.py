@@ -40,7 +40,7 @@ class TranslationService:
         
         "{text}"
         
-        Provide ONLY the translated text without any additional explanations or notes.
+        Provide ONLY the translated text without any additional explanations, notes, or quotation marks around the text.
         """
         
         try:
