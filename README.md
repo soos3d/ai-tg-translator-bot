@@ -6,6 +6,7 @@ An AI-powered bot that enables real-time multilingual communication in Telegram 
 
 - 🌐 Automatic language detection
 - 🔄 Bidirectional translation (any language ↔️ English)
+- ❓ Automatic FAQ answering for common questions
 - 📝 Preserves message context and threading
 - 💾 Message caching for improved performance
 - 🗄️ Dual database storage (local SQLite + MongoDB)
@@ -59,6 +60,12 @@ The bot is configured through environment variables in the `.env` file:
 - `DB_CLEANUP_DAYS`: Days to keep translations in local database (default: 7)
 - `LANG_CONFIDENCE_THRESHOLD`: Minimum confidence for language detection (default: 0.75)
 
+### FAQ Settings
+- `FAQ_ENABLED`: Enable or disable FAQ answering (default: True)
+- `FAQ_LLM`: LLM model for FAQ answering (defaults to TRANSLATION_LLM if not specified)
+- `FAQ_CONFIDENCE_THRESHOLD`: Minimum confidence for FAQ answers (default: 0.7)
+- `FAQ_CONTENT`: Your FAQ content in Q&A format
+
 ### MongoDB Settings (Optional)
 
 You can store the messages in MongoDB for analytics and reporting.
@@ -97,6 +104,7 @@ python3 -m streamlit run streamlit-ui/analytics_dashboard.py
 3. The bot will automatically:
    - Detect non-English messages
    - Translate them to English
+   - Answer questions directly if they match FAQ content
    - Translate replies back to the original language (Must reply to the translated message) 
 
 ## How It Works
@@ -106,7 +114,13 @@ python3 -m streamlit run streamlit-ui/analytics_dashboard.py
    - Uses language detection to identify non-English messages
    - Only processes messages with high confidence (>75% by default)
 
-2. **Translation Flow**:
+2. **FAQ Answering**:
+   - If a message is in English, checks if it can be answered from FAQ
+   - If a message is in another language, translates it first then checks FAQ
+   - If the question has a confident answer, responds directly to the user
+   - If no confident answer is found, proceeds with normal translation flow
+
+3. **Translation Flow**:
    - User sends message in their language
    - Bot detects language and confidence level
    - If non-English, translates to English
@@ -115,11 +129,6 @@ python3 -m streamlit run streamlit-ui/analytics_dashboard.py
      - Original message
      - Detected language
      - English translation
-
-3. **Agent Response**:
-   - Support agent replies to the translated message
-   - Bot automatically translates the reply to user's language
-   - Sends translated response as a reply to original message
 
 4. **Data Management**:
     - Translations are cached in memory for performance

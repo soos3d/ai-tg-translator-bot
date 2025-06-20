@@ -4,9 +4,9 @@ import os
 from telegram.ext import ApplicationBuilder, MessageHandler, filters
 
 from config import (BOT_TOKEN, DEBUG_MODE, CACHE_MAX_SIZE,
-                  CACHE_EXPIRATION_SECONDS, DB_CLEANUP_DAYS)
+                  CACHE_EXPIRATION_SECONDS, DB_CLEANUP_DAYS, FAQ_ENABLED)
 from handlers import handle_message, handle_agent_reply
-from services import DatabaseService, CacheService
+from services import DatabaseService, CacheService, FaqService
 
 # Configure logging
 logging.basicConfig(
@@ -31,6 +31,12 @@ def main():
     # Initialize cache service with configured values
     cache_service = CacheService(max_size=CACHE_MAX_SIZE, expiration_seconds=CACHE_EXPIRATION_SECONDS)
     application.bot_data['cache_service'] = cache_service
+    
+    # Initialize FAQ service if enabled
+    if FAQ_ENABLED:
+        faq_service = FaqService()
+        application.bot_data['faq_service'] = faq_service
+        logger.info("FAQ service initialized")
 
     # Perform database maintenance - cleanup old entries (older than 30 days)
     db_service.delete_old_translations(days=DB_CLEANUP_DAYS)

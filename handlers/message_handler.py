@@ -4,9 +4,10 @@ from langdetect import detect, detect_langs
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from config import LANG_CONFIDENCE_THRESHOLD, MESSAGE_EMOJIS, MONGODB_URI
+from config import LANG_CONFIDENCE_THRESHOLD, MESSAGE_EMOJIS, MONGODB_URI, FAQ_ENABLED
 from services import TranslationService
 from services.mongodb_service import MongoDBService
+from services.faq_service import FaqService
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -14,10 +15,12 @@ logger = logging.getLogger(__name__)
 # Initialize services
 translation_service = TranslationService()
 mongodb_service = MongoDBService() if MONGODB_URI else None
+faq_service = FaqService() if FAQ_ENABLED else None
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Handle incoming user messages and translate non-English messages to English.
+    If the message is a question, try to answer it using the FAQ service.
     
     Args:
         update (Update): The incoming update from Telegram
@@ -36,12 +39,100 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     detection = detect_langs(message.text)[0]  # Get detailed detection info
     confidence = detection.prob  # Get the confidence score
     
-    # Only proceed if the message is not in English AND we're confident about the detection
-    if lang_code != 'en' and confidence >= LANG_CONFIDENCE_THRESHOLD:
+    # Process the message based on language
+    if lang_code == 'en':
+        # For English messages, check if we can answer from FAQ
+        if FAQ_ENABLED and faq_service:
+            try:
+                answer = faq_service.answer_question(message.text)
+                
+                # If we have an answer from the FAQ, reply directly
+                if answer:
+                    logger.info(f"Answering question directly from FAQ")
+                    
+                    # Format the answer with an emoji
+                    formatted_answer = f"{MESSAGE_EMOJIS['faq']} {answer}"
+                    
+                    # Reply to the user's message
+                    await message.reply_text(
+                        formatted_answer,
+                        disable_notification=False  # Notify the user
+                    )
+                    
+                    # Store in MongoDB if enabled
+                    if mongodb_service:
+                        mongodb_service.store_message(
+                            message.from_user.id,
+                            message.from_user.username,
+                            message.from_user.first_name,
+                            message.from_user.last_name,
+                            message.chat_id,
+                            message.message_id,
+                            message.text,  # Original text
+                            lang_code,     # Language code
+                            message.text,  # Same as original (already English)
+                            None           # Use current timestamp
+                        )
+                    
+                    # No need to process further
+                    return
+            except Exception as e:
+                logger.error(f"Error processing FAQ question: {e}")
+        
+        # If we reach here, it means the message is in English but not answerable from FAQ
+        # or FAQ is disabled - do nothing as per original behavior
+        return
+    
+    # For non-English messages, first translate then check FAQ if confidence is high enough
+    elif confidence >= LANG_CONFIDENCE_THRESHOLD:
         try:
             # Translate the message to English
             logger.info(f"Translating message from {lang_code} to English")
             translated_text = translation_service.translate_text(message.text, lang_code)
+            
+            # Check if the translated message can be answered from FAQ
+            if FAQ_ENABLED and faq_service:
+                try:
+                    answer = faq_service.answer_question(translated_text)
+                    
+                    # If we have an answer from the FAQ, translate it back and reply
+                    if answer:
+                        logger.info(f"Answering translated question from FAQ")
+                        
+                        # Translate the answer back to the original language
+                        translated_answer = translation_service.translate_text(answer, "en", lang_code)
+                        
+                        # Format the answer with an emoji
+                        formatted_answer = f"{MESSAGE_EMOJIS['faq']} {translated_answer}"
+                        
+                        # Reply to the user's message
+                        await message.reply_text(
+                            formatted_answer,
+                            disable_notification=False  # Notify the user
+                        )
+                        
+                        # Store in MongoDB if enabled
+                        if mongodb_service:
+                            mongodb_service.store_message(
+                                message.from_user.id,
+                                message.from_user.username,
+                                message.from_user.first_name,
+                                message.from_user.last_name,
+                                message.chat_id,
+                                message.message_id,
+                                message.text,      # Original text
+                                lang_code,         # Language code
+                                translated_text,   # Translated text
+                                None              # Use current timestamp
+                            )
+                        
+                        # No need to process further
+                        return
+                except Exception as e:
+                    logger.error(f"Error processing translated FAQ question: {e}")
+            
+            # If we reach here, either the FAQ service didn't provide an answer,
+            # or an error occurred, or FAQ is disabled - continue with normal translation flow
             
             # Format user information
             user = message.from_user
@@ -97,46 +188,36 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     cache_service = context.bot_data.get('cache_service')
                     if cache_service:
                         cache_data = {
+                            'translated_message_id': sent_message.message_id,
                             'original_message_id': message.message_id,
-                            'original_language': lang_code,
                             'chat_id': message.chat_id,
                             'user_id': message.from_user.id,
+                            'original_language': lang_code,
                             'original_text': message.text,
                             'translated_text': translated_text
                         }
                         cache_service.set(sent_message.message_id, cache_data)
-                        logger.info(f"Stored translation info for message {sent_message.message_id} in local database and cache")
-                    else:
-                        logger.info(f"Stored translation info for message {sent_message.message_id} in local database only (no cache)")
+                        logger.info(f"Cached translation info for message {sent_message.message_id}")
                 else:
-                    logger.error(f"Failed to store translation info for message {sent_message.message_id} in local database")
+                    logger.error("Failed to store translation in database")
             else:
-                logger.error("Local database service not initialized")
-                
-            # Store user data and English text in MongoDB
-            if mongodb_service and mongodb_service.is_connected:
-                # Get the English text (either translated or original)
-                english_text = translated_text if lang_code != 'en' else message.text
-                
-                # Store in MongoDB
-                mongo_success = mongodb_service.store_message(
-                    user_id=message.from_user.id,
-                    username=message.from_user.username,
-                    first_name=message.from_user.first_name,
-                    last_name=message.from_user.last_name,
-                    chat_id=message.chat_id,
-                    message_id=message.message_id,
-                    original_text=message.text,
-                    original_lang=lang_code,
-                    english_text=english_text
+                logger.error("Database service not initialized")
+            
+            # Store in MongoDB if enabled
+            if mongodb_service:
+                mongodb_service.store_message(
+                    message.from_user.id,
+                    message.from_user.username,
+                    message.from_user.first_name,
+                    message.from_user.last_name,
+                    message.chat_id,
+                    message.message_id,
+                    message.text,
+                    lang_code,
+                    translated_text,
+                    None  # Use current timestamp
                 )
-                
-                if mongo_success:
-                    logger.info(f"Stored message data in MongoDB for user {message.from_user.id}")
-                else:
-                    logger.error(f"Failed to store message data in MongoDB for user {message.from_user.id}")
-            elif MONGODB_URI and not mongodb_service:
-                logger.error("MongoDB service failed to initialize")
+                logger.info(f"Stored message in MongoDB for user {message.from_user.id}")
             elif not MONGODB_URI:
                 logger.debug("MongoDB storage is disabled. No data stored in MongoDB.")
         
@@ -144,7 +225,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             error_message = f"Translation error: {e}"
             logger.error(error_message)
             await message.reply_text(f"Sorry, I couldn't translate your message: {e}")
-
 
 async def handle_agent_reply(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
