@@ -35,7 +35,7 @@ class FaqService:
             str: The answer to the question or None if not answerable from FAQ
         """
         print(question)
-        print(self.system_prompt)
+        print(system_prompt)
         try:
             # Create the prompt with the FAQ reference included in the system prompt
             chat_completion = self.client.chat.completions.create(
@@ -54,7 +54,7 @@ class FaqService:
             )
             
             response = chat_completion.choices[0].message.content.strip()
-            
+            print(response)
             # Check if the response indicates the answer is not in the FAQ
             if "I don't have information on that" in response or "not in the FAQ" in response:
                 logger.info(f"Question not answerable from FAQ: {question}")
