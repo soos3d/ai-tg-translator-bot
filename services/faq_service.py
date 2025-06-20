@@ -35,7 +35,7 @@ class FaqService:
             str: The answer to the question or None if not answerable from FAQ
         """
         print(question)
-        print(system_prompt)
+        print(self.system_prompt)
         try:
             # Create the prompt with the FAQ reference included in the system prompt
             chat_completion = self.client.chat.completions.create(
